@@ -14,12 +14,23 @@ int publish(pid_t pid, char* name, void *msg) {
     return _syscall(PM_PROC_NR, PUBLISH, &m);  // invoke underlying system call
 }
 
-int retrieve(int val) {
-    message m;      // Minix message to pass parameters to a system call
+void *retrieve(pid_t sub, char* name) {
+    message m;      // Minix message to pass parameters to a system call 
+	message *msg = malloc(sizeof(message));
+    m.m1_i1 = (int)sub;  // set first integer of message to val
+	m.m1_p1 = name;
+	m.m1_i2 = strlen(name);
+	m.m1_p2 = msg;
     
-    m.m1_i1 = val;  // set first integer of message to val
-    
-    return _syscall(PM_PROC_NR, RETRIEVE, &m);  // invoke underlying system call
+    int x = _syscall(PM_PROC_NR, RETRIEVE, &m);  // invoke underlying system call
+	if (x == 0)
+	{
+		return msg;
+	}else
+	{
+		free(msg);
+		return NULL;
+	}
 }
 
 int topicCreate(char* name) {
