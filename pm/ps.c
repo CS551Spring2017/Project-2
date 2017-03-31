@@ -16,6 +16,9 @@ typedef struct{
     int full;
     pid_t subscribers[MAX_SUBSCRIBERS];
     pid_t publishers[MAX_PUBLISHERS];
+	endpoint_t blocked[MAX_PUBLISHERS];
+    int numBlocked;
+	int blockedIndex;
     int numMsg;
     int numPubs;
     int numSubs;
@@ -52,6 +55,8 @@ int do_publish(){
             topics[topicID].numMsg++;
             if(topics[topicID].numMsg==5){
                  topics[topicID].full=1;
+				 topics[topicID].blocked[topics[topicID].numBlocked++] = who_e;
+				 sys_blockps(who_e,1);
             }
             return 1;
           }
@@ -115,6 +120,10 @@ int do_retrieve(){
           //remove message from messageQueue and shift Queue
           topics[topicID].numMsg--;
           deleteMessage(topicID);
+		  if(topics[topicID].blockedIndex < topics[topicID].numBlocked)
+		  {
+		  sys_blockps(topics[topicID].blocked[topics[topicID].blockedIndex++], 0);
+		  }
         }
 		sys_datacopy(PM_PROC_NR,(vir_bytes)msg,who_e,(vir_bytes)(m_in.m1_p2), sizeof(message));
         return 0;
@@ -129,10 +138,13 @@ int do_retrieve(){
 
 
 int deleteMessage(int index){
+	message empty;
+	empty.m_type = -1;
 	 topics[index].messageQueue[0] = topics[index].messageQueue[1];
 	 topics[index].messageQueue[1] = topics[index].messageQueue[2];
 	 topics[index].messageQueue[2] = topics[index].messageQueue[3];
 	 topics[index].messageQueue[3] = topics[index].messageQueue[4];
+	 topics[index].messageQueue[4] = empty;
   	for(int k=0;k<MAX_SUBSCRIBERS;k++){
        for(int l = 0;l < 4; l++){
     			topics[index].retrieved[l][k] = topics[index].retrieved[l+1][k];
@@ -142,6 +154,7 @@ int deleteMessage(int index){
        }
        topics[index].subIndex[k]--;
   	}
+	topics[index].full = 0;
 	return 1;
 }
 
@@ -159,6 +172,7 @@ int getTopicID(char *name){
 int do_topicCreate(){
     char name[128];
     sys_datacopy(who_e, (vir_bytes)m_in.m1_p1, SELF, (vir_bytes)name,(m_in.m1_i1 + 1)*sizeof(char));
+	printf("Creating topic: %s\n",name);
   	int chkTopic = getTopicID(name);
   	if(chkTopic>=0){
     	printf("Error: Topic already exists\n");
@@ -183,6 +197,12 @@ int do_topicCreate(){
       }
       newTopic->subIndex[k] = 0;
     }
+	for(int m = 0;m < MAX_PUBLISHERS; m++)
+    {
+        newTopic->blocked[m] = 0;
+    }
+    newTopic->numBlocked = 0;
+	newTopic->blockedIndex = 0;
     topics[numOfTopics++] = *newTopic;
     return numOfTopics - 1;
 }
