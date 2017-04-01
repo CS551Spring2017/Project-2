@@ -176,7 +176,6 @@ int getTopicID(char *name){
 int do_topicCreate(){
     char name[128];
     sys_datacopy(who_e, (vir_bytes)m_in.m1_p1, SELF, (vir_bytes)name,(m_in.m1_i1 + 1)*sizeof(char));
-	printf("Creating topic: %s\n",name);
   	int chkTopic = getTopicID(name);
   	if(chkTopic>=0){
     	printf("Error: Topic already exists\n");
@@ -283,4 +282,9 @@ int do_topicSubscriber(){
     	return -1;
     }
     return 0;
+}
+
+int do_topicReset(){
+	numOfTopics = 0;
+	return 0;
 }
