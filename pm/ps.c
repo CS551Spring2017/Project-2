@@ -16,6 +16,7 @@ typedef struct{
     int full;
     pid_t subscribers[MAX_SUBSCRIBERS];
     pid_t publishers[MAX_PUBLISHERS];
+	endpoint_t pubEndpoints[MAX_PUBLISHERS];
 	endpoint_t blocked[MAX_PUBLISHERS];
     int numBlocked;
 	int blockedIndex;
@@ -55,8 +56,11 @@ int do_publish(){
             topics[topicID].numMsg++;
             if(topics[topicID].numMsg==5){
                  topics[topicID].full=1;
-				 topics[topicID].blocked[topics[topicID].numBlocked++] = who_e;
-				 sys_blockps(who_e,1);
+				 for(int m = 0; m < topics[topicID].numPubs; m++)
+				 {
+					 topics[topicID].blocked[topics[topicID].numBlocked++] = topics[topicID].pubEndpoints[m];
+					 sys_blockps(topics[topicID].pubEndpoints[m],1);
+				 }
             }
             return 0;
           }
@@ -219,20 +223,6 @@ int do_topicLookup(){
     
     for(int i = 0;i < numOfTopics;i++){
         printf("ID: %d Name: %s\n",i, topics[i].name);
-
-        printf("%d Publishers:\n",topics[i].numPubs);
-        for(int j=0;j<topics[i].numPubs;j++){
-            printf("Publisher PID:%d\n", topics[i].publishers[j]);
-        }
-        
-        printf("%d Subscribers:\n",topics[i].numSubs);
-        for(int k=0;k<topics[i].numSubs;k++){
-            printf("Subscriber PID:%d\n", topics[i].subscribers[k]);
-        }
-        printf("#%d Messages in buffer\n",topics[i].numMsg);
-        for(int l=0;l<topics[i].numMsg;l++){
-            printf("%d\n",topics[i].messageQueue[l].m1_i1);
-        }
     }
     return 0;
 }
@@ -252,6 +242,7 @@ int do_topicPublisher(){
 		}
       	if(topics[topicID].numPubs<MAX_PUBLISHERS){
             topics[topicID].publishers[topics[topicID].numPubs] = proc;
+			topics[topicID].pubEndpoints[topics[topicID].numPubs] = who_e;
             topics[topicID].numPubs++;
         }
         else{
