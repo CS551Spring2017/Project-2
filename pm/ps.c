@@ -179,6 +179,11 @@ int do_topicCreate(){
       //printf("Please eneter a NEW topic\n");
       return -1;
   	}
+	if(numOfTopics >= MAX_TOPICS)
+	{
+		printf("Error: Max amount of topics reached\n");
+		return -1;
+	}
 
     topic *newTopic = malloc(sizeof(topic));
     strcpy(newTopic->name,name);
