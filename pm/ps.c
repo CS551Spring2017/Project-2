@@ -58,7 +58,7 @@ int do_publish(){
 				 topics[topicID].blocked[topics[topicID].numBlocked++] = who_e;
 				 sys_blockps(who_e,1);
             }
-            return 1;
+            return 0;
           }
           else {
             printf("Error: Message buffer is full\n");
@@ -155,7 +155,7 @@ int deleteMessage(int index){
        topics[index].subIndex[k]--;
   	}
 	topics[index].full = 0;
-	return 1;
+	return 0;
 }
 
 int getTopicID(char *name){
