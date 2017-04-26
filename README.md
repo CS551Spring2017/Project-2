@@ -28,7 +28,7 @@ make all;
 ```
 
 > **Note:**
-> - Can only be run in MINIX 3
+> - Can only be run in MINIX 3.2.1
 
 ----------
 
